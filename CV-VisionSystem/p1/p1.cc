@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <iostream>
 
-#include "image.h"
+#include "../VisionStartCode/image.h"
 
 using namespace ComputerVisionProjects;
 

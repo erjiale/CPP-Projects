@@ -30,7 +30,7 @@ LIBS_ALL =  -L/usr/lib -L/usr/local/lib
 
 #First Program (ListTest)
 
-Cpp_OBJ = image.o p1.o
+Cpp_OBJ = ../VisionStartCode/image.o p1.o
 PROGRAM_NAME = p1
 
 $(PROGRAM_NAME): $(Cpp_OBJ)
@@ -42,4 +42,4 @@ all:
 
 
 clean:
-	(rm -f *.o; rm image_demo; rm *.pgm; rm p1; rm p2; rm p3; rm p4)
+	(rm -f *.o; rm image_demo; rm p1; rm p2; rm p3; rm p4)
