@@ -5,6 +5,145 @@
 #include <unordered_set>
 using namespace ComputerVisionProjects;
 
+void sequentialLabelingAlgorithm(Image &the_image) {
+  std::unordered_map<int, std::unordered_set<int>> labels_map;
+
+  int label = 0;
+  for(size_t r = 0; r < the_image.num_rows(); r++) {
+    for(size_t c = 0; c < the_image.num_columns(); c++) {
+      if(the_image.GetPixel(r,c)==0) continue; // BLACK
+
+      // WHITE 
+      if(r==0 && c==0) continue;
+      else if(r==0 && c>0) { // First row
+        int left = the_image.GetPixel(r,c-1);
+        if(left != 0) the_image.SetPixel(r,c,left);
+        else {
+          the_image.SetPixel(r,c,++label);
+          std::unordered_set<int> ( {label} );
+        }
+      }
+      else if(c==0 && r>0) { // First Column
+        int top = the_image.GetPixel(r-1,c);
+        if(top != 0) the_image.SetPixel(r,c,top);
+        else {
+          the_image.SetPixel(r,c,++label);
+          std::unordered_set<int> ( {label} );
+        }
+      }
+      else { // Not First Row || First Column
+        int top = the_image.GetPixel(r, c-1);
+        int left = the_image.GetPixel(r-1, c);
+        int top_left = the_image.GetPixel(r-1, c-1);
+
+        if(top==0 && left==0 && top_left==0) { // None labeled
+          the_image.SetPixel(r,c,++label);
+          labels_map[label] = std::unordered_set<int> ( {label} );
+        }
+        else if(top==0 && left==0 && top_left!=0) the_image.SetPixel(r,c,top_left); // Top_left
+        else if(top==0 && left!=0 && top_left==0) the_image.SetPixel(r,c,left); // Left
+        else if(top!=0 && left==0 && top_left==0) the_image.SetPixel(r,c,top); // Top
+        else if(top!=0 && left!=0 && top_left==0) {  // Top && Left
+          if(top==left) the_image.SetPixel(r,c,top);
+          else {
+            int smaller_label = top>left ? left : top;
+            int bigger_label = top>left ? top : left;
+            the_image.SetPixel(r,c, smaller_label);
+            // Set up equivalences
+            if(labels_map.count(smaller_label)) {
+              labels_map[smaller_label].insert(bigger_label);
+              labels_map.erase(bigger_label);
+            }
+            else {
+              bool canDeleteBigLabel = false;
+              for(auto m : labels_map) {
+                if(canDeleteBigLabel) break;
+                if(m.second.count(smaller_label)) {
+                  m.second.insert(bigger_label);
+                  canDeleteBigLabel = true;
+                }
+              }
+              labels_map.erase(bigger_label);
+            }
+          }
+        }
+        else if(top!=0 && left==0 && top_left!=0) { // Top && Top_left
+          if(top==top_left) the_image.SetPixel(r,c,top);
+          else {
+            int smaller_label = top>top_left ? top_left : top;
+            int bigger_label = top>top_left ? top : top_left;
+            the_image.SetPixel(r,c, smaller_label);
+            // Set up equivalences
+            if(labels_map.count(smaller_label)) {
+              labels_map[smaller_label].insert(bigger_label);
+              labels_map.erase(bigger_label);
+            }
+            else {
+              bool canDeleteBigLabel = false;
+              for(auto m : labels_map) {
+                if(canDeleteBigLabel) break;
+                if(m.second.count(smaller_label)) {
+                  m.second.insert(bigger_label);
+                  canDeleteBigLabel = true;
+                }
+              }
+              labels_map.erase(bigger_label);
+            }
+          }
+        }
+        else if(top==0 && left!=0 && top_left!=0) { // Top_left && Left
+          if(left==top_left) the_image.SetPixel(r,c,left);
+          else {
+            int smaller_label = left>top_left ? top_left : left;
+            int bigger_label = left>top_left ? left : top_left;
+            the_image.SetPixel(r,c, smaller_label);
+            // Set up equivalences
+            if(labels_map.count(smaller_label)) {
+              labels_map[smaller_label].insert(bigger_label);
+              labels_map.erase(bigger_label);
+            }
+            else {
+              bool canDeleteBigLabel = false;
+              for(auto m : labels_map) {
+                if(canDeleteBigLabel) break;
+                if(m.second.count(smaller_label)) {
+                  m.second.insert(bigger_label);
+                  canDeleteBigLabel = true;
+                }
+              }
+              labels_map.erase(bigger_label);
+            }
+          }
+        }
+        else if(top!=0 && top_left!=0 && left!=0) the_image.SetPixel(r,c,top); // ALL three labeled
+        else {
+          std::cout << "else ";
+        }
+      }
+    }
+  }
+
+  for(auto p : labels_map) {
+    std::cout << "key: [" << p.first << "]\n";
+    std::cout << "val: [";
+    for(auto set : p.second) {
+      std::cout << set << ", ";
+    }
+    std::cout << "\n";
+  }
+
+  int label_groups_count = labels_map.size();
+  std::cout << label_groups_count << "\n";
+
+  for(size_t r=0; r<the_image.num_rows(); r++) {
+    for(size_t c=0; c<the_image.num_columns(); c++) {
+      if(the_image.GetPixel(r,c)==0) continue; // BLACK
+
+      
+    }
+  }
+}
+
 int main(int argc, char *argv[]) {
   if (argc!=3) {
     printf("Usage: %s input-binary-image output-labeled-image\n", argv[0]);
@@ -20,92 +159,11 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
-  // Image output_image;
-  // output_image.AllocateSpaceAndSetSize(the_image.num_rows(), the_image.num_columns());
-  std::unordered_map<int, std::unordered_set<int>> labels_map;
+  sequentialLabelingAlgorithm(the_image); // Run Sequential Labeling Algo
 
-  int label = 0;
-  // // 2nd row, all columns
-  // for(size_t c = 1; c < the_image.num_columns(); c++) {
-  //   if(the_image.GetPixel(1,c)==0) continue; // BLACK
-
-  //   int top = the_image.GetPixel(1, c-1), 
-  //           left = the_image.GetPixel(1-1, c), 
-  //           top_left = the_image.GetPixel(1-1, c-1);
-  //   if()
-
+  // if (!WriteImage(output_file, the_image)) {
+  //   std::cout << "Can't write to file " << output_file << std::endl;
+  //   return 0;
   // }
-
-  for(size_t r = 0; r < the_image.num_rows(); r++) {
-    for(size_t c = 0; c < the_image.num_columns(); c++) {
-      if(the_image.GetPixel(r,c)==0) continue; // BLACK
-
-      // WHITE 
-      if(r==0 && c>0) { // First row
-        int left = the_image.GetPixel(r,c-1);
-        if(left != 0) the_image.SetPixel(r,c,left);
-        else {
-          the_image.SetPixel(r,c,++label);
-          if(labels_map.count(label)) labels_map[label].insert(label);
-          else labels_map[label] = std::unordered_set<int> ( {label} );
-        }
-      }
-      else if(c==0 && r>0) { // First Column
-        int top = the_image.GetPixel(r-1,c);
-        if(top != 0) the_image.SetPixel(r,c,top);
-        else {
-          the_image.SetPixel(r,c,++label);
-          if(labels_map.count(label)) labels_map[label].insert(label);
-          else labels_map[label] = std::unordered_set<int> ( {label} );
-        }
-      }
-      else { // Not First Row || First Column
-        std::cout << r << " " << c << "\n";
-      }
-      
-      // WHITE && not First row
-
-      // if(r==0 && c==0) {
-      //   if(the_image.GetPixel(r,c)==0) output_image.SetPixel(r,c,0);
-      //   else output_image.SetPixel(r,c,label);
-      //   label++;
-      //   continue;
-      // }
-      // if(r==0) {
-      //   output_image.SetPixel(r,c,output_image.GetPixel(r, c-1));
-      //   continue;
-      // }
-      // else if(c==0) {
-      //   output_image.SetPixel(r,c,output_image.GetPixel(r-1,c));
-      //   continue;
-      // }
-      // else {
-      //   int top = the_image.GetPixel(r, c-1), 
-      //       left = the_image.GetPixel(r-1, c), 
-      //       top_left = the_image.GetPixel(r-1, c-1),
-      //       output_top = output_image.GetPixel(r, c-1), 
-      //       output_left = output_image.GetPixel(r-1, c), 
-      //       output_top_left = output_image.GetPixel(r-1, c-1);
-
-      //   if(top==0 && left==0 && top_left==0) output_image.SetPixel(r, c, 0); // Background
-      //   else if(top==0 && left==0 && top_left!=0) output_image.SetPixel(r, c, output_top_left); // Top_left
-      //   else if(top==0 && left!=0 && top_left==0) output_image.SetPixel(r, c, output_left); // Left
-      //   else if(top!=0 && left==0 && top_left==0) output_image.SetPixel(r, c, output_top); // Top
-      //   // if((top==left || top!=left) && top_left==0) the_image.SetPixel(r, c, left); // 
-      //   else output_image.SetPixel(r, c, label);
-      // }
-    }
-  }
-
-  // for(auto p : labels_map) {
-  //   std::cout << "key: [" << p.first << " ]\n";
-  //   for(auto set : p.second) {
-  //     std::cout << "val: [" << set << ", ";
-  //   }
-  //   std::cout << "\n";
-  // }
-  if (!WriteImage(output_file, the_image)) {
-    std::cout << "Can't write to file " << output_file << std::endl;
-    return 0;
-  }
 }
+
